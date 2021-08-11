@@ -15,7 +15,8 @@ services:
     image: nginx:alpine
     volumes:
       - ./Docker/Nginx/nginx.conf:/etc/nginx/conf.d/default.conf
-      - ../${SYMFONY_APP_PATH}:/application
+      - ./Docker/PHP/php-ini-overrides.ini:/usr/local/etc/php/conf.d/infaestructure-overrides.ini
+      - ./application:/application
     ports:
       - ${WEB_LOCAL_PORT_HTTP}:80
       - ${WEB_LOCAL_PORT_HTTPS}:443
@@ -33,7 +34,7 @@ services:
         - LOCAL_UID=${LOCAL_UID}
         - LOCAL_GID=${LOCAL_GID}
     volumes:
-      - ./application:/var/www/html
+      - ./application:/application
       - ./Docker/PHP/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
     depends_on:
       - db
