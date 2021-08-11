@@ -1,28 +1,40 @@
-FROM php:7.4-apache-buster
+FROM php:7.4-fpm
+
+WORKDIR "/application"
+
+# Install git
 RUN apt-get update \
-    && apt-get install -y libicu-dev unixodbc freetds-bin freetds-dev \
-                       freetds-common freetds-dev sqsh tdsodbc libct4 libsybdb5 \
-                       ssl-cert mariadb-client git tdsodbc libsybdb5 libxml2-dev \
-                       re2c bc locales locales-all libpng-dev libldap2-dev \
-                       libfreetype6-dev  libjpeg62-turbo-dev libpng-dev libzip-dev \
-                       git unzip vim dos2unix zlib1g-dev \
-                       git unzip vim dos2unix zlib1g-dev \
-    && mkdir -p /usr/share/man/man1 \
-    && ln -fs /usr/lib/x86_64-linux-gnu/libldap.so /usr/lib/ \
-    && docker-php-ext-configure intl \
-    && docker-php-ext-configure pdo_dblib --with-libdir=lib/x86_64-linux-gnu \
-    && docker-php-ext-configure gd \
-    && docker-php-ext-install pdo_dblib pdo_mysql opcache intl gd ldap bcmath soap zip \
-    && a2enmod ssl rewrite \
-    && a2ensite default-ssl \
-    && mkdir -p /var/lib/php/sessions \
-    && chmod 1733 /var/lib/php/sessions
+    && apt-get -y install git \
+    && apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/* ;
 
-# Install git, unzip
-RUN apt-get update \
-    && apt-get -y install git unzip vim dos2unix
+RUN apt update \
+    && apt install -y libicu-dev libpng-dev libjpeg-dev libpq-dev  libonig-dev zip \
+    && apt clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/* \
+    && docker-php-ext-install mysqli pdo pdo_mysql;
 
-RUN pecl install xdebug \
-    && docker-php-ext-enable xdebug
+RUN docker-php-ext-configure gd --with-jpeg \
+    && docker-php-ext-install intl gd mbstring \
+    && docker-php-ext-install mysqli pdo pdo_mysql;
 
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+RUN apt update && apt install -y mysql-client \
+    && apt clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*;
+
+RUN pecl install xdebug
+
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer;
+
+# Create user
+# Fix debconf warnings upon build
+ARG DEBIAN_FRONTEND=noninteractive
+ARG LOCAL_UID=1000
+ARG LOCAL_GID=1000
+
+RUN groupadd -g $LOCAL_GID developer \
+    && useradd -d /home/developer -s /bin/bash -u $LOCAL_UID -g $LOCAL_GID developer \
+    && mkdir /home/developer && chown -R developer. /home/developer ;
+
+USER root
+
+RUN usermod -u $LOCAL_UID developer && groupmod -g $LOCAL_GID developer
+
+USER developer
