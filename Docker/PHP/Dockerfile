@@ -19,9 +19,18 @@ RUN docker-php-ext-configure gd --with-jpeg \
 RUN apt update && apt install -y mysql-client \
     && apt clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*;
 
-RUN pecl install xdebug
-
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer;
+
+#Configure xDebug
+RUN apt update \
+    && apt install -y iproute2 \
+    && apt clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*;
+
+COPY ../Docker/PHP/php-ini-overrides.ini /usr/local/etc/php/conf.d/infaestructure-overrides.ini
+ADD ../Docker/PHP/xdebug.sh /
+RUN /xdebug.sh;
+
+RUN pecl install xdebug
 
 # Create user
 # Fix debconf warnings upon build

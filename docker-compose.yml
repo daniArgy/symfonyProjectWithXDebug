@@ -38,7 +38,6 @@ services:
     volumes:
       - ./application:/application
       - ./Docker/PHP/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
-      - ./Docker/PHP/php-ini-overrides.ini:/usr/local/etc/php/conf.d/infaestructure-overrides.ini
     depends_on:
       - db
     networks:
